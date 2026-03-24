@@ -143,6 +143,7 @@
     padding: 19px 22px;
     display: flex;
     align-items: center;
+    min-height: 96px;
     gap: 16px;
     cursor: pointer;
     box-shadow: 0 8px 24px rgba(29,48,29,0.09);
@@ -202,7 +203,13 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 14px rgba(22,34,22,0.2);
   }
 
-  .card-info { flex: 1; }
+  .card-info {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto auto 24px;
+    align-content: center;
+  }
 
   .card-titulo {
     font-family: 'Cormorant Garamond', serif;
@@ -216,6 +223,10 @@
     font-size: 13px;
     color: var(--texto-suave);
     margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.25;
   }
 
   .card-arrow {
@@ -319,6 +330,7 @@
     margin-top: 6px;
     display: inline-block;
     box-shadow: 0 4px 12px rgba(148,115,53,0.28);
+    align-self: start;
   }
 
   .footer-home {
@@ -746,6 +758,7 @@
     .card {
       border-radius: 16px;
       padding: 13px 14px;
+      min-height: 82px;
       gap: 11px;
     }
 
@@ -760,6 +773,7 @@
     .card-desc { font-size: 12px; margin-top: 2px; }
     .card-arrow { font-size: 18px; }
     .badge { font-size: 10px; padding: 2px 8px; margin-top: 5px; }
+    .card-info { grid-template-rows: auto auto 21px; }
 
     .form-grid { grid-template-columns: 1fr; }
     .turnos-grid { grid-template-columns: repeat(2, 1fr); }
@@ -874,7 +888,7 @@
       <div class="form-grid">
         <div class="campo" id="campo-dni">
           <label>DNI</label>
-          <input type="text" id="dni" placeholder="32844293" maxlength="8" inputmode="numeric" pattern="[0-9]*">
+          <input type="text" id="dni" placeholder="33123456" maxlength="8" inputmode="numeric" pattern="[0-9]*">
           <span class="error-msg">Ingresá un DNI numérico de hasta 8 dígitos</span>
         </div>
         <div class="campo" id="campo-lote">
