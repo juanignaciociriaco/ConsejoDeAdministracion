@@ -1,0 +1,11 @@
+services:
+  la-enriqueta-api:
+    build: .
+    container_name: la-enriqueta-api
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      - PORT=4000
+    restart: unless-stopped

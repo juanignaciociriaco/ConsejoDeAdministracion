@@ -60,7 +60,17 @@ lote,dni
 40,30111222
 ```
 
-También podés agregar columnas extra (por ejemplo `nombre`, `apellido`, `email`), no afectan la validación.
+También se soporta formato con múltiples DNI por lote en una sola fila:
+
+```csv
+lote,consorcista1,dni1,consorcista2,dni2,consorcista3,dni3,email1,email2,email3
+39,Juan Perez,32844293,Ana Perez,30111222,,,juan@mail.com,ana@mail.com,
+```
+
+Reglas de lectura del padrón:
+- Es obligatorio `lote`.
+- Debe existir al menos una columna DNI: `dni`, `dni1`, `dni2`, `dni3`, etc.
+- Cualquier otra columna (`consorcista*`, `email*`, etc.) se permite y no afecta la validación.
 
 Comportamiento:
 - Si lote y DNI coinciden con el padrón: la reserva sigue normal.

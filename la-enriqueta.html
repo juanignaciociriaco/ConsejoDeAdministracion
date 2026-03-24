@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club de Campo La Enriqueta</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #2d4a2d;
+    --verde-medio: #4a7c4a;
+    --verde-claro: #8ab88a;
+    --crema: #f5f0e8;
+    --crema-oscuro: #e8e0d0;
+    --dorado: #c9a84c;
+    --texto: #1a2e1a;
+    --texto-suave: #5a6e5a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--crema);
+    color: var(--texto);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── FONDO DECORATIVO ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(45,74,45,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 90% 80%, rgba(138,184,138,0.1) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a7c4a' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── VISTAS ── */
+  #vista-home, #vista-form { position: relative; z-index: 1; }
+  #vista-form { display: none; }
+
+  /* ══ HOME ══ */
+  .home-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    gap: 0;
+  }
+
+  .escudo {
+    width: 80px; height: 80px;
+    background: var(--verde);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 24px rgba(45,74,45,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+    animation: flotar 4s ease-in-out infinite;
+  }
+
+  @keyframes flotar {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .escudo svg { width: 40px; height: 40px; }
+
+  .home-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 300;
+    color: var(--verde);
+    text-align: center;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
+
+  .home-titulo em {
+    font-style: italic;
+    color: var(--dorado);
+  }
+
+  .home-subtitulo {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--texto-suave);
+    text-align: center;
+    margin-top: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .divisor {
+    width: 40px; height: 1px;
+    background: linear-gradient(to right, transparent, var(--dorado), transparent);
+    margin: 28px auto;
+  }
+
+  /* ── CARDS ── */
+  .cards {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(45,74,45,0.12);
+    border-radius: 16px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--verde-claro);
+    transform: scaleY(0);
+    transition: transform 0.25s ease;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(45,74,45,0.15);
+    border-color: rgba(45,74,45,0.25);
+    background: rgba(255,255,255,0.9);
+  }
+
+  .card:hover::before { transform: scaleY(1); }
+
+  .card-icono {
+    width: 44px; height: 44px;
+    background: var(--verde);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+  }
+
+  .card-info { flex: 1; }
+
+  .card-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--verde);
+  }
+
+  .card-desc {
+    font-size: 12px;
+    color: var(--texto-suave);
+    margin-top: 2px;
+  }
+
+  .card-arrow {
+    color: var(--verde-claro);
+    font-size: 18px;
+    transition: transform 0.2s;
+  }
+
+  .card:hover .card-arrow { transform: translateX(4px); }
+
+  /* ── CARD DESTACADA ── */
+  .card.destacada {
+    background: linear-gradient(135deg, var(--verde) 0%, var(--verde-medio) 100%);
+    border-color: transparent;
+    color: white;
+  }
+
+  .card.destacada .card-titulo { color: white; }
+  .card.destacada .card-desc { color: rgba(255,255,255,0.7); }
+  .card.destacada .card-arrow { color: rgba(255,255,255,0.6); }
+  .card.destacada::before { background: var(--dorado); }
+  .card.destacada .card-icono {
+    background: rgba(255,255,255,0.15);
+  }
+  .card.destacada:hover {
+    box-shadow: 0 8px 32px rgba(45,74,45,0.4);
+  }
+
+  .badge {
+    background: var(--dorado);
+    color: white;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 4px;
+    display: inline-block;
+  }
+
+  .footer-home {
+    margin-top: 36px;
+    font-size: 11px;
+    color: var(--texto-suave);
+    text-align: center;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+  }
+
+  /* Animaciones entrada */
+  .home-wrap > * {
+    opacity: 0;
+    animation: aparecer 0.6s ease forwards;
+  }
+  .escudo { animation-delay: 0.1s; }
+  .home-titulo { animation-delay: 0.2s; }
+  .home-subtitulo { animation-delay: 0.25s; }
+  .divisor { animation-delay: 0.3s; }
+  .cards { animation-delay: 0.4s; }
+  .footer-home { animation-delay: 0.5s; }
+
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ══ FORMULARIO ══ */
+  .form-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px 60px;
+  }
+
+  .form-header {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .btn-volver {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(45,74,45,0.15);
+    border-radius: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--verde);
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+  }
+
+  .btn-volver:hover {
+    background: white;
+    box-shadow: 0 2px 12px rgba(45,74,45,0.12);
+  }
+
+  .form-header-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--verde);
+  }
+
+  .form-card {
+    width: 100%;
+    max-width: 520px;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(45,74,45,0.12);
+    border-radius: 20px;
+    padding: 32px 28px;
+    box-shadow: 0 4px 40px rgba(45,74,45,0.08);
+    animation: aparecer 0.4s ease forwards;
+  }
+
+  .form-seccion-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--verde);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--crema-oscuro);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .form-grid.col-1 { grid-template-columns: 1fr; }
+
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .campo label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--texto-suave);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .campo input, .campo select {
+    background: var(--crema);
+    border: 1.5px solid var(--crema-oscuro);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--texto);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    appearance: none;
+  }
+
+  .campo input:focus, .campo select:focus {
+    border-color: var(--verde-medio);
+    box-shadow: 0 0 0 3px rgba(74,124,74,0.1);
+    background: white;
+  }
+
+  .campo input::placeholder { color: #b0b8a8; }
+
+  /* ── SELECTOR DE TURNOS ── */
+  .separador { margin: 24px 0 20px; }
+
+  .semana-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .semana-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--verde);
+    font-weight: 400;
+  }
+
+  .btn-semana {
+    background: rgba(45,74,45,0.08);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--verde);
+    transition: all 0.2s;
+  }
+
+  .btn-semana:hover { background: rgba(45,74,45,0.16); }
+  .btn-semana:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .dias-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .dia-tab {
+    flex: 1;
+    padding: 10px 8px;
+    text-align: center;
+    background: var(--crema);
+    border: 1.5px solid var(--crema-oscuro);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dia-tab:hover { border-color: var(--verde-claro); }
+
+  .dia-tab.activo {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: white;
+  }
+
+  .dia-tab .dia-nombre {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: block;
+    opacity: 0.7;
+  }
+
+  .dia-tab .dia-fecha {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .dia-tab.activo .dia-nombre,
+  .dia-tab.activo .dia-fecha { opacity: 1; color: white; }
+
+  .turnos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .turno-btn {
+    padding: 12px 6px;
+    text-align: center;
+    background: var(--crema);
+    border: 1.5px solid var(--crema-oscuro);
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--texto);
+    transition: all 0.18s;
+  }
+
+  .turno-btn:hover:not(.ocupado) {
+    border-color: var(--verde-medio);
+    background: rgba(74,124,74,0.08);
+    color: var(--verde);
+  }
+
+  .turno-btn.seleccionado {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: white;
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(45,74,45,0.25);
+  }
+
+  .turno-btn.ocupado {
+    opacity: 0.35;
+    cursor: not-allowed;
+    text-decoration: line-through;
+    font-size: 12px;
+  }
+
+  .turno-seleccionado-info {
+    margin-top: 14px;
+    background: rgba(45,74,45,0.06);
+    border: 1px solid rgba(45,74,45,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--verde);
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .turno-seleccionado-info.visible { display: flex; }
+
+  /* ── SUBMIT ── */
+  .btn-reservar {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--verde) 0%, var(--verde-medio) 100%);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 4px 20px rgba(45,74,45,0.3);
+  }
+
+  .btn-reservar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(45,74,45,0.4);
+  }
+
+  .btn-reservar:active { transform: scale(0.98); }
+
+  /* ── CONFIRMACION ── */
+  #confirmacion {
+    display: none;
+    width: 100%;
+    max-width: 520px;
+    animation: aparecer 0.5s ease forwards;
+  }
+
+  .confirm-card {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(45,74,45,0.15);
+    border-radius: 20px;
+    padding: 48px 32px;
+    text-align: center;
+    box-shadow: 0 4px 40px rgba(45,74,45,0.1);
+  }
+
+  .confirm-icono {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--verde), var(--verde-medio));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+    box-shadow: 0 8px 24px rgba(45,74,45,0.3);
+  }
+
+  .confirm-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 300;
+    color: var(--verde);
+    margin-bottom: 8px;
+  }
+
+  .confirm-detalle {
+    font-size: 14px;
+    color: var(--texto-suave);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .confirm-turno {
+    background: var(--crema);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 0 auto 28px;
+    max-width: 320px;
+    font-size: 15px;
+    color: var(--verde);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .btn-link-meet {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--verde);
+    color: white;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(45,74,45,0.3);
+  }
+
+  .btn-link-meet:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(45,74,45,0.4);
+  }
+
+  .nota-meet {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--texto-suave);
+    opacity: 0.7;
+  }
+
+  /* ── ERROR ── */
+  .error-msg {
+    display: none;
+    color: #c0392b;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .campo.error input,
+  .campo.error select { border-color: #e74c3c; }
+  .campo.error .error-msg { display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .turnos-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-card { padding: 24px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ HOME ══ -->
+<div id="vista-home">
+  <div class="home-wrap">
+
+    <div class="escudo">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 4 L34 10 L34 22 C34 30 20 36 20 36 C20 36 6 30 6 22 L6 10 Z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+        <path d="M20 8 C20 8 15 12 15 18 C15 21 17 23 20 23 C23 23 25 21 25 18 C25 15 23 11 20 8Z" fill="rgba(255,255,255,0.6)"/>
+        <path d="M14 26 Q20 24 26 26" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M12 29 Q20 27 28 29" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <h1 class="home-titulo">Club de Campo<br><em>La Enriqueta</em></h1>
+    <p class="home-subtitulo">Consejo de Administración</p>
+
+    <div class="divisor"></div>
+
+    <div class="cards">
+
+      <div class="card destacada" onclick="mostrarForm()">
+        <div class="card-icono">📅</div>
+        <div class="card-info">
+          <div class="card-titulo">Reservar turno</div>
+          <div class="card-desc">Reunión virtual con el consejo · 20 min</div>
+          <span class="badge">Mié &amp; Jue · 19:00–21:00</span>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+
+      <a class="card" href="mailto:consejo@consorciolaenriqueta.com">
+        <div class="card-icono" style="background:#4a6fa5;">✉️</div>
+        <div class="card-info">
+          <div class="card-titulo">Email</div>
+          <div class="card-desc">consejo@consorciolaenriqueta.com</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <a class="card" href="#" target="_blank">
+        <div class="card-icono" style="background:#7a6a5a;">📄</div>
+        <div class="card-info">
+          <div class="card-titulo">Reglamento interno</div>
+          <div class="card-desc">Descargá el reglamento vigente</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+    </div>
+
+    <p class="footer-home">© 2025 · Consorcio Club de Campo La Enriqueta</p>
+  </div>
+</div>
+
+<!-- ══ FORMULARIO ══ -->
+<div id="vista-form">
+  <div class="form-wrap">
+
+    <div class="form-header">
+      <button class="btn-volver" onclick="volverHome()">← Volver</button>
+      <span class="form-header-titulo">Reservá tu turno</span>
+    </div>
+
+    <div class="form-card" id="form-card">
+
+      <div class="form-seccion-titulo">👤 Tus datos</div>
+
+      <div class="form-grid">
+        <div class="campo" id="campo-nombre">
+          <label>Nombre</label>
+          <input type="text" id="nombre" placeholder="Juan">
+          <span class="error-msg">Ingresá tu nombre</span>
+        </div>
+        <div class="campo" id="campo-apellido">
+          <label>Apellido</label>
+          <input type="text" id="apellido" placeholder="García">
+          <span class="error-msg">Ingresá tu apellido</span>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="campo" id="campo-dni">
+          <label>DNI</label>
+          <input type="text" id="dni" placeholder="32844293" maxlength="8" inputmode="numeric" pattern="[0-9]*">
+          <span class="error-msg">Ingresá un DNI numérico de hasta 8 dígitos</span>
+        </div>
+        <div class="campo" id="campo-lote">
+          <label>Lote / Unidad</label>
+          <select id="lote">
+            <option value="">Seleccioná tu lote</option>
+          </select>
+          <span class="error-msg">Ingresá tu lote</span>
+        </div>
+      </div>
+
+      <div class="form-grid col-1">
+        <div class="campo" id="campo-celular">
+          <label>Celular (con código de área)</label>
+          <input type="tel" id="celular" placeholder="Ej: 221 555-1234">
+          <span class="error-msg">Ingresá tu celular</span>
+        </div>
+      </div>
+
+      <div class="form-grid col-1">
+        <div class="campo" id="campo-email">
+          <label>Email (donde recibís la confirmación)</label>
+          <input type="email" id="email" placeholder="juan@ejemplo.com">
+          <span class="error-msg">Ingresá un email válido</span>
+        </div>
+      </div>
+
+      <div class="separador">
+        <div class="form-seccion-titulo">📅 Elegí tu turno</div>
+      </div>
+
+      <div class="semana-nav">
+        <button class="btn-semana" id="btn-prev" onclick="cambiarSemana(-1)" disabled>‹ Anterior</button>
+        <span class="semana-label" id="semana-label"></span>
+        <button class="btn-semana" id="btn-next" onclick="cambiarSemana(1)">Siguiente ›</button>
+      </div>
+
+      <div class="dias-tabs" id="dias-tabs"></div>
+
+      <div class="turnos-grid" id="turnos-grid"></div>
+
+      <div class="turno-seleccionado-info" id="turno-info">
+        <span>✅</span>
+        <span id="turno-info-texto"></span>
+      </div>
+
+      <button class="btn-reservar" onclick="enviarReserva()">Confirmar reserva →</button>
+
+    </div>
+
+    <div id="confirmacion">
+      <div class="confirm-card">
+        <div class="confirm-icono">✓</div>
+        <div class="confirm-titulo">¡Turno reservado!</div>
+        <p class="confirm-detalle">
+          Nos vemos en la videollamada.<br>
+          Recibirás un recordatorio por WhatsApp.
+        </p>
+        <div class="confirm-turno" id="confirm-detalle-turno"></div>
+        <a href="#" class="btn-link-meet" id="btn-meet" target="_blank">
+          🎥 &nbsp;Entrar a la videollamada
+        </a>
+        <p class="nota-meet">El link se activa 5 minutos antes del turno</p>
+        <br><br>
+        <button class="btn-volver" onclick="volverHome()" style="margin: 0 auto; display:flex;">← Volver al inicio</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ══ CONFIGURACIÓN ══
+  const DIAS_HABILITADOS = [3, 4]; // 3=Miércoles, 4=Jueves
+  const HORA_INICIO = 19;
+  const HORA_FIN = 21;
+  const DURACION = 20; // minutos
+
+  // Turnos ya reservados (simulados — conectar a backend real)
+  const RESERVADOS = [];
+
+  // ══ ESTADO ══
+  let semanaOffset = 0;
+  let diaSeleccionado = null;
+  let turnoSeleccionado = null;
+
+  // ══ UTILIDADES ══
+  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  function getLunesDeHoy(offset = 0) {
+    const hoy = new Date();
+    const dia = hoy.getDay();
+    const diff = (dia === 0 ? -6 : 1 - dia);
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diff + offset * 7);
+    lunes.setHours(0,0,0,0);
+    return lunes;
+  }
+
+  function formatFecha(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  function poblarLotes() {
+    const loteSelect = document.getElementById('lote');
+    loteSelect.innerHTML = '<option value="">Seleccioná tu lote</option>';
+    for (let i = 0; i <= 350; i++) {
+      const option = document.createElement('option');
+      option.value = String(i);
+      option.textContent = String(i);
+      loteSelect.appendChild(option);
+    }
+  }
+
+  function configurarDniInput() {
+    const dniInput = document.getElementById('dni');
+    dniInput.addEventListener('input', () => {
+      dniInput.value = dniInput.value.replace(/\D/g, '').slice(0, 8);
+    });
+  }
+
+  function generarTurnos() {
+    const turnos = [];
+    let h = HORA_INICIO;
+    let m = 0;
+    while (h < HORA_FIN || (h === HORA_FIN && m === 0)) {
+      const hStr = String(h).padStart(2,'0');
+      const mStr = String(m).padStart(2,'0');
+      const total = h * 60 + m;
+      if (total >= HORA_FIN * 60) break;
+      turnos.push(`${hStr}:${mStr}`);
+      m += DURACION;
+      if (m >= 60) { h += Math.floor(m / 60); m = m % 60; }
+    }
+    return turnos;
+  }
+
+  // ══ RENDERIZAR SEMANA ══
+  function renderSemana() {
+    const lunes = getLunesDeHoy(semanaOffset);
+    const viernesRef = new Date(lunes); viernesRef.setDate(lunes.getDate() + 4);
+
+    document.getElementById('semana-label').textContent =
+      `${lunes.getDate()} al ${viernesRef.getDate()} de ${meses[viernesRef.getMonth()]}`;
+
+    document.getElementById('btn-prev').disabled = semanaOffset <= 0;
+
+    const tabsEl = document.getElementById('dias-tabs');
+    tabsEl.innerHTML = '';
+
+    const diasSemana = [];
+    DIAS_HABILITADOS.forEach(d => {
+      const fecha = new Date(lunes);
+      fecha.setDate(lunes.getDate() + (d - 1));
+      diasSemana.push({ fecha, nombre: dias[d] });
+    });
+
+    diasSemana.forEach(({ fecha, nombre }) => {
+      const key = formatFecha(fecha);
+      const tab = document.createElement('div');
+      tab.className = 'dia-tab' + (diaSeleccionado === key ? ' activo' : '');
+      tab.innerHTML = `<span class="dia-nombre">${nombre.slice(0,3)}</span><span class="dia-fecha">${fecha.getDate()}</span>`;
+      tab.onclick = () => { diaSeleccionado = key; turnoSeleccionado = null; renderSemana(); };
+      tabsEl.appendChild(tab);
+    });
+
+    renderTurnos();
+  }
+
+  function renderTurnos() {
+    const grid = document.getElementById('turnos-grid');
+    const info = document.getElementById('turno-info');
+    grid.innerHTML = '';
+
+    if (!diaSeleccionado) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--texto-suave);font-size:13px;padding:20px 0;">Seleccioná un día para ver los turnos disponibles</div>';
+      info.classList.remove('visible');
+      return;
+    }
+
+    const turnos = generarTurnos();
+    turnos.forEach(hora => {
+      const key = diaSeleccionado + '_' + hora;
+      const ocupado = RESERVADOS.includes(key);
+      const btn = document.createElement('button');
+      btn.className = 'turno-btn' + (ocupado ? ' ocupado' : '') + (turnoSeleccionado === hora ? ' seleccionado' : '');
+      btn.textContent = hora;
+      btn.disabled = ocupado;
+      btn.onclick = () => {
+        turnoSeleccionado = hora;
+        actualizarInfoTurno();
+        renderTurnos();
+      };
+      grid.appendChild(btn);
+    });
+
+    actualizarInfoTurno();
+  }
+
+  function actualizarInfoTurno() {
+    const info = document.getElementById('turno-info');
+    const infoTxt = document.getElementById('turno-info-texto');
+    if (diaSeleccionado && turnoSeleccionado) {
+      const [y, m, d] = diaSeleccionado.split('-');
+      const fecha = new Date(y, m-1, d);
+      infoTxt.textContent = `${dias[fecha.getDay()]} ${d}/${m} a las ${turnoSeleccionado} hs`;
+      info.classList.add('visible');
+    } else {
+      info.classList.remove('visible');
+    }
+  }
+
+  // ══ NAVEGACIÓN ══
+  function cambiarSemana(dir) {
+    semanaOffset = Math.max(0, semanaOffset + dir);
+    diaSeleccionado = null;
+    turnoSeleccionado = null;
+    renderSemana();
+  }
+
+  function mostrarForm() {
+    document.getElementById('vista-home').style.display = 'none';
+    document.getElementById('vista-form').style.display = 'block';
+    renderSemana();
+    window.scrollTo(0, 0);
+  }
+
+  // ⚙️ Apuntá esto a tu VPS/hosting donde corre server.js
+  const API_URL = '/api/reserva';
+
+  function volverHome() {
+    document.getElementById('vista-form').style.display = 'none';
+    document.getElementById('vista-home').style.display = 'block';
+    document.getElementById('form-card').style.display = 'block';
+    document.getElementById('confirmacion').style.display = 'none';
+    ['nombre','apellido','dni','lote','celular','email'].forEach(id => document.getElementById(id).value = '');
+    diaSeleccionado = null; turnoSeleccionado = null; semanaOffset = 0;
+    window.scrollTo(0, 0);
+  }
+
+  // ══ VALIDACIÓN ══
+  function validar() {
+    let ok = true;
+    const campos = [
+      { id: 'nombre',   wrapper: 'campo-nombre' },
+      { id: 'apellido', wrapper: 'campo-apellido' },
+      { id: 'dni',      wrapper: 'campo-dni' },
+      { id: 'lote',     wrapper: 'campo-lote' },
+      { id: 'celular',  wrapper: 'campo-celular' },
+      { id: 'email',    wrapper: 'campo-email' },
+    ];
+    campos.forEach(({ id, wrapper }) => {
+      const val = document.getElementById(id).value.trim();
+      const wrap = document.getElementById(wrapper);
+      if (id === 'email') {
+        const emailOk = val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        if (!emailOk) { wrap.classList.add('error'); ok = false; }
+        else { wrap.classList.remove('error'); }
+      } else if (id === 'dni') {
+        const dniOk = /^\d{1,8}$/.test(val);
+        if (!dniOk) { wrap.classList.add('error'); ok = false; }
+        else { wrap.classList.remove('error'); }
+      } else {
+        if (!val) { wrap.classList.add('error'); ok = false; }
+        else { wrap.classList.remove('error'); }
+      }
+    });
+    if (!diaSeleccionado || !turnoSeleccionado) {
+      alert('Por favor seleccioná un día y un horario para tu turno.');
+      ok = false;
+    }
+    return ok;
+  }
+
+  // ══ ENVÍO CON POST AL BACKEND ══
+  async function enviarReserva() {
+    if (!validar()) return;
+
+    const nombre   = document.getElementById('nombre').value.trim();
+    const apellido = document.getElementById('apellido').value.trim();
+    const dni      = document.getElementById('dni').value.trim();
+    const lote     = document.getElementById('lote').value.trim();
+    const celular  = document.getElementById('celular').value.trim();
+    const email    = document.getElementById('email').value.trim();
+
+    const [y, m, d] = diaSeleccionado.split('-');
+    const fecha = new Date(y, m-1, d);
+    const fechaStr = `${dias[fecha.getDay()]} ${d}/${m}`;
+
+    const roomName = `LaEnriqueta-${y}${m}${d}-${turnoSeleccionado.replace(':','')}`;
+    const jitsiUrl = `https://meet.jit.si/${roomName}`;
+
+    const btnReservar = document.querySelector('.btn-reservar');
+    btnReservar.textContent = 'Enviando…';
+    btnReservar.disabled = true;
+
+    try {
+      const resp = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre, apellido, dni, lote, celular, email,
+          fecha: diaSeleccionado,
+          hora: turnoSeleccionado,
+          jitsiUrl
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Error del servidor');
+
+      RESERVADOS.push(diaSeleccionado + '_' + turnoSeleccionado);
+
+      document.getElementById('confirm-detalle-turno').innerHTML =
+        `👤 <strong>${nombre} ${apellido}</strong><br>
+         🏡 Lote ${lote} &nbsp;|&nbsp; DNI ${dni}<br>
+         📅 ${fechaStr} a las <strong>${turnoSeleccionado} hs</strong><br>
+         ✉️ Confirmación enviada a <strong>${email}</strong>`;
+
+      document.getElementById('btn-meet').href = jitsiUrl;
+      document.getElementById('form-card').style.display = 'none';
+      document.getElementById('confirmacion').style.display = 'block';
+      window.scrollTo(0, 0);
+
+    } catch (err) {
+      alert('❌ No se pudo completar la reserva:\n' + err.message + '\n\nReintentá o contactá al consejo.');
+      btnReservar.textContent = 'Confirmar reserva →';
+      btnReservar.disabled = false;
+    }
+  }
+
+  // ══ INIT ══
+  poblarLotes();
+  configurarDniInput();
+  renderSemana();
+</script>
+</body>
+</html>
