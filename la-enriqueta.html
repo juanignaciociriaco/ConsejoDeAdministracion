@@ -57,8 +57,9 @@
 
   .escudo {
     width: 80px; height: 80px;
-    background: var(--verde);
+    background: white;
     border-radius: 50%;
+    overflow: hidden;
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 20px;
     box-shadow: 0 4px 24px rgba(45,74,45,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
@@ -70,7 +71,12 @@
     50% { transform: translateY(-6px); }
   }
 
-  .escudo svg { width: 40px; height: 40px; }
+  .escudo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 
   .home-titulo {
     font-family: 'Cormorant Garamond', serif;
@@ -619,22 +625,26 @@
   <div class="home-wrap">
 
     <div class="escudo">
-      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 4 L34 10 L34 22 C34 30 20 36 20 36 C20 36 6 30 6 22 L6 10 Z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
-        <path d="M20 8 C20 8 15 12 15 18 C15 21 17 23 20 23 C23 23 25 21 25 18 C25 15 23 11 20 8Z" fill="rgba(255,255,255,0.6)"/>
-        <path d="M14 26 Q20 24 26 26" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M12 29 Q20 27 28 29" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-linecap="round"/>
-      </svg>
+      <img src="https://acceso.consorciolaenriqueta.com/assets/branding/laenriqueta.jpg" alt="Logo La Enriqueta">
     </div>
 
     <h1 class="home-titulo">Club de Campo<br><em>La Enriqueta</em></h1>
-    <p class="home-subtitulo">Consejo de Administración</p>
+    <p class="home-subtitulo">Portal del Socio</p>
 
     <div class="divisor"></div>
 
     <div class="cards">
 
-      <div class="card destacada" onclick="mostrarForm()">
+      <a class="card destacada" href="https://acceso.consorciolaenriqueta.com" target="_blank" rel="noopener noreferrer">
+        <div class="card-icono" style="background:rgba(255,255,255,0.15);font-size:24px;color:#fff;">✓</div>
+        <div class="card-info">
+          <div class="card-titulo">Sistema de Acceso al Barrio</div>
+          <div class="card-desc">Ingresá al portal de accesos</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <div class="card" onclick="mostrarForm()">
         <div class="card-icono">📅</div>
         <div class="card-info">
           <div class="card-titulo">Reservar turno</div>
@@ -653,11 +663,11 @@
         <div class="card-arrow">→</div>
       </a>
 
-      <a class="card" href="#" target="_blank">
-        <div class="card-icono" style="background:#7a6a5a;">📄</div>
+      <a class="card" href="mailto:administracion@consorciolaenriqueta.com">
+        <div class="card-icono" style="background:#6a7f8f;">📧</div>
         <div class="card-info">
-          <div class="card-titulo">Reglamento interno</div>
-          <div class="card-desc">Descargá el reglamento vigente</div>
+          <div class="card-titulo">Email a Administración</div>
+          <div class="card-desc">administracion@consorciolaenriqueta.com</div>
         </div>
         <div class="card-arrow">→</div>
       </a>
