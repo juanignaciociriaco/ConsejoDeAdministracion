@@ -11,4 +11,7 @@ services:
       - PADRON_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/e/2PACX-1vRAIAs5-AbPGVI1Tro-Bm6Jpw4D38DjZYNyeOyhxXTJ_nbZjhdE3GVRsv5dZVZ9NAIj9lbVSaxJJOYU/pub?gid=495925484&single=true&output=csv
       - PADRON_REFRESH_MS=3600000
       - PADRON_FETCH_TIMEOUT_MS=8000
+      - RESERVAS_DB_PATH=/app/data/reservas.sqlite
+    volumes:
+      - ./data:/app/data
     restart: unless-stopped

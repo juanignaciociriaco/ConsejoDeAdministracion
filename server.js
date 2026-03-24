@@ -4,6 +4,7 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 app.use(express.json());
@@ -23,10 +24,60 @@ const PADRON_SHEETS_CSV_URL = String(process.env.PADRON_SHEETS_CSV_URL || '').tr
 const PADRON_REFRESH_MS = Number(process.env.PADRON_REFRESH_MS || 3600000);
 const PADRON_FETCH_TIMEOUT_MS = Number(process.env.PADRON_FETCH_TIMEOUT_MS || 8000);
 const RESERVA_CC_EMAIL = process.env.RESERVA_CC_EMAIL || 'consejo@consorciolaenriqueta.com';
+const RESERVAS_DB_PATH = process.env.RESERVAS_DB_PATH || path.join(__dirname, 'data', 'reservas.sqlite');
 let padronPorLote = new Map();
 let padronMtimeMs = 0;
 let padronLastRefreshMs = 0;
 let padronSource = 'none';
+
+const reservasDbDir = path.dirname(RESERVAS_DB_PATH);
+if (!fs.existsSync(reservasDbDir)) {
+  fs.mkdirSync(reservasDbDir, { recursive: true });
+}
+
+const reservasDb = new sqlite3.Database(RESERVAS_DB_PATH);
+
+function dbRun(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    reservasDb.run(sql, params, function onRun(err) {
+      if (err) return reject(err);
+      resolve({ lastID: this.lastID, changes: this.changes });
+    });
+  });
+}
+
+function dbAll(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    reservasDb.all(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+}
+
+async function initReservasDb() {
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS reservas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      apellido TEXT NOT NULL,
+      dni TEXT NOT NULL,
+      lote TEXT NOT NULL,
+      celular TEXT NOT NULL,
+      email TEXT NOT NULL,
+      fecha TEXT NOT NULL,
+      hora TEXT NOT NULL,
+      jitsi_url TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(fecha, hora)
+    )
+  `);
+  console.log(`✅ SQLite listo en ${RESERVAS_DB_PATH}`);
+}
+
+function isUniqueConstraintError(err) {
+  return Boolean(err && (err.code === 'SQLITE_CONSTRAINT' || String(err.message || '').includes('UNIQUE constraint failed')));
+}
 
 function normalizeLote(value) {
   return String(value ?? '').trim();
@@ -159,6 +210,12 @@ function validarLoteDniContraPadron(lote, dni) {
 }
 
 (async () => {
+  try {
+    await initReservasDb();
+  } catch (err) {
+    console.error(`❌ No se pudo inicializar SQLite: ${err.message}`);
+  }
+
   try {
     await asegurarPadronActualizado({ forzar: true });
   } catch (err) {
@@ -401,6 +458,28 @@ app.post('/api/reserva', async (req, res) => {
 
   const htmlBody = buildMailHtml({ nombre, apellido, lote, dni, celular, fechaStr, hora, jitsiUrl });
 
+  let reservaId = null;
+
+  try {
+    const insertResult = await dbRun(
+      `
+        INSERT INTO reservas (nombre, apellido, dni, lote, celular, email, fecha, hora, jitsi_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [nombre, apellido, normalizeDni(dni), normalizeLote(lote), celular, email, fecha, hora, jitsiUrl || null]
+    );
+    reservaId = insertResult.lastID;
+  } catch (err) {
+    if (isUniqueConstraintError(err)) {
+      return res.status(409).json({
+        ok: false,
+        error: 'Ese turno ya fue reservado. Elegí otro horario.'
+      });
+    }
+    console.error('❌ Error al guardar la reserva en SQLite:', err.message);
+    return res.status(500).json({ ok: false, error: 'No se pudo guardar la reserva. Intentá nuevamente.' });
+  }
+
   try {
     await transporter.sendMail({
       from: `"Consorcio La Enriqueta" <${process.env.SMTP_USER}>`,
@@ -414,8 +493,34 @@ app.post('/api/reserva', async (req, res) => {
     res.json({ ok: true, message: 'Reserva confirmada y mail enviado.' });
 
   } catch (err) {
+    if (reservaId !== null) {
+      try {
+        await dbRun('DELETE FROM reservas WHERE id = ?', [reservaId]);
+      } catch (rollbackErr) {
+        console.error(`⚠️ No se pudo revertir la reserva ${reservaId}: ${rollbackErr.message}`);
+      }
+    }
     console.error('❌ Error al enviar mail:', err.message);
     res.status(500).json({ ok: false, error: 'No se pudo enviar el mail. Revisá la config SMTP.' });
+  }
+});
+
+// ── TURNOS OCUPADOS ──
+app.get('/api/turnos-ocupados', async (_, res) => {
+  try {
+    const rows = await dbAll(
+      `
+        SELECT fecha, hora
+        FROM reservas
+        WHERE fecha >= date('now', 'localtime')
+        ORDER BY fecha, hora
+      `
+    );
+    const turnos = rows.map((r) => `${r.fecha}_${r.hora}`);
+    res.json({ ok: true, turnos });
+  } catch (err) {
+    console.error('❌ Error consultando turnos ocupados:', err.message);
+    res.status(500).json({ ok: false, error: 'No se pudo consultar turnos ocupados.' });
   }
 });
 

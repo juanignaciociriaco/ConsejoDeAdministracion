@@ -135,6 +135,13 @@
     gap: 14px;
   }
 
+  .cards > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 452px;
+    justify-self: center;
+  }
+
   .card {
     background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.84) 100%);
     backdrop-filter: blur(12px);
@@ -301,6 +308,14 @@
   .card.card-admin::before { background: #607a8b; }
   .card.card-admin .card-icono { background: #607a8b; }
   .card.card-admin .card-arrow { color: #607a8b; }
+
+  .card.card-expensas {
+    background: linear-gradient(135deg, #f4fbff 0%, #e8f6ff 100%);
+    border-color: rgba(64,140,196,0.3);
+  }
+  .card.card-expensas::before { background: #3c8bc2; }
+  .card.card-expensas .card-icono { background: #3c8bc2; }
+  .card.card-expensas .card-arrow { color: #3c8bc2; }
 
   .card.card-guardia {
     background: linear-gradient(135deg, #f5fff9 0%, #e9fbf1 100%);
@@ -482,6 +497,85 @@
     transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
     appearance: none;
+  }
+
+  .lote-dropdown {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lote-trigger {
+    width: 100%;
+    background: var(--crema);
+    border: 1.5px solid var(--crema-oscuro);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--texto);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+
+  .lote-trigger::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--texto-suave);
+    font-size: 12px;
+  }
+
+  .lote-dropdown.abierto .lote-trigger {
+    border-color: var(--verde-medio);
+    box-shadow: 0 0 0 3px rgba(74,124,74,0.1);
+    background: white;
+  }
+
+  .lote-dropdown.abierto .lote-trigger::after {
+    content: '▴';
+  }
+
+  .lote-menu {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-top: 0;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #fff;
+    transition: max-height 0.2s ease, opacity 0.18s ease, margin-top 0.18s ease;
+  }
+
+  .lote-dropdown.abierto .lote-menu {
+    max-height: 190px;
+    opacity: 1;
+    margin-top: 8px;
+    overflow-y: auto;
+    border-color: var(--crema-oscuro);
+  }
+
+  .lote-option {
+    width: 100%;
+    border: 0;
+    background: #fff;
+    padding: 9px 12px;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--texto);
+    cursor: pointer;
+  }
+
+  .lote-option:hover {
+    background: rgba(74,124,74,0.08);
+  }
+
+  .lote-option + .lote-option {
+    border-top: 1px solid rgba(232,224,208,0.7);
   }
 
   .campo input:focus, .campo select:focus {
@@ -740,7 +834,8 @@
   }
 
   .campo.error input,
-  .campo.error select { border-color: #e74c3c; }
+  .campo.error select,
+  .campo.error .lote-trigger { border-color: #e74c3c; }
   .campo.error .error-msg { display: block; }
 
   /* ── RESPONSIVE ── */
@@ -754,6 +849,11 @@
     .home-wrap { padding: 28px 14px; }
     .cards { gap: 10px; }
     .cards { grid-template-columns: 1fr; }
+    .cards > :last-child:nth-child(odd) {
+      grid-column: auto;
+      max-width: none;
+      justify-self: stretch;
+    }
 
     .card {
       border-radius: 16px;
@@ -834,6 +934,15 @@
         <div class="card-arrow">→</div>
       </a>
 
+      <a class="card card-expensas" href="https://app.consorcioabierto.com/login" target="_blank" rel="noopener noreferrer">
+        <div class="card-icono">$</div>
+        <div class="card-info">
+          <div class="card-titulo">Pagar expensas</div>
+          <div class="card-desc">Ingresá a Consorcio Abierto</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
       <div class="card card-turno" onclick="mostrarForm()">
         <div class="card-icono">📅</div>
         <div class="card-info">
@@ -893,9 +1002,11 @@
         </div>
         <div class="campo" id="campo-lote">
           <label>Lote / Unidad</label>
-          <select id="lote">
-            <option value="">Seleccioná tu lote</option>
-          </select>
+          <div class="lote-dropdown" id="lote-dropdown">
+            <button type="button" class="lote-trigger" id="lote-trigger">Seleccioná tu lote</button>
+            <div class="lote-menu" id="lote-menu"></div>
+          </div>
+          <input type="hidden" id="lote" value="">
           <span class="error-msg">Ingresá tu lote</span>
         </div>
       </div>
@@ -967,8 +1078,7 @@
   const HORA_FIN = 21;
   const DURACION = 20; // minutos
 
-  // Turnos ya reservados (simulados — conectar a backend real)
-  const RESERVADOS = [];
+  let reservadosSet = new Set();
 
   // ══ ESTADO ══
   let semanaOffset = 0;
@@ -993,25 +1103,62 @@
     return d.toISOString().split('T')[0];
   }
 
+  function setLoteSeleccionado(valor, etiqueta = null) {
+    const loteInput = document.getElementById('lote');
+    const loteTrigger = document.getElementById('lote-trigger');
+    loteInput.value = valor || '';
+    loteTrigger.textContent = etiqueta || valor || 'Seleccioná tu lote';
+  }
+
+  function abrirLoteDropdown(abrir) {
+    const loteDropdown = document.getElementById('lote-dropdown');
+    const loteTrigger = document.getElementById('lote-trigger');
+    loteDropdown.classList.toggle('abierto', abrir);
+    loteTrigger.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+  }
+
+  function inicializarDropdownLote() {
+    const loteDropdown = document.getElementById('lote-dropdown');
+    const loteTrigger = document.getElementById('lote-trigger');
+
+    loteTrigger.addEventListener('click', () => {
+      const abierto = loteDropdown.classList.contains('abierto');
+      abrirLoteDropdown(!abierto);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!loteDropdown.contains(e.target)) {
+        abrirLoteDropdown(false);
+      }
+    });
+  }
+
   async function poblarLotes() {
-    const loteSelect = document.getElementById('lote');
-    loteSelect.innerHTML = '<option value="">Cargando lotes…</option>';
+    const loteMenu = document.getElementById('lote-menu');
+    loteMenu.innerHTML = '<button type="button" class="lote-option" disabled>Cargando lotes…</button>';
+    setLoteSeleccionado('');
     try {
       const res = await fetch('/api/lotes');
       const data = await res.json();
-      loteSelect.innerHTML = '<option value="">Seleccioná tu lote</option>';
       if (data.ok && data.lotes.length > 0) {
+        loteMenu.innerHTML = '';
         data.lotes.forEach(lote => {
-          const option = document.createElement('option');
-          option.value = lote;
-          option.textContent = lote;
-          loteSelect.appendChild(option);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'lote-option';
+          btn.textContent = lote;
+          btn.onclick = () => {
+            setLoteSeleccionado(lote);
+            abrirLoteDropdown(false);
+            document.getElementById('campo-lote').classList.remove('error');
+          };
+          loteMenu.appendChild(btn);
         });
       } else {
-        loteSelect.innerHTML = '<option value="">No se pudieron cargar los lotes</option>';
+        loteMenu.innerHTML = '<button type="button" class="lote-option" disabled>No se pudieron cargar los lotes</button>';
       }
     } catch (err) {
-      loteSelect.innerHTML = '<option value="">Error al cargar lotes</option>';
+      loteMenu.innerHTML = '<button type="button" class="lote-option" disabled>Error al cargar lotes</button>';
     }
   }
 
@@ -1036,6 +1183,18 @@
       if (m >= 60) { h += Math.floor(m / 60); m = m % 60; }
     }
     return turnos;
+  }
+
+  async function cargarTurnosOcupados() {
+    try {
+      const res = await fetch('/api/turnos-ocupados');
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.turnos)) {
+        reservadosSet = new Set(data.turnos);
+      }
+    } catch (err) {
+      console.warn('No se pudieron cargar los turnos ocupados.');
+    }
   }
 
   // ══ RENDERIZAR SEMANA ══
@@ -1084,7 +1243,7 @@
     const turnos = generarTurnos();
     turnos.forEach(hora => {
       const key = diaSeleccionado + '_' + hora;
-      const ocupado = RESERVADOS.includes(key);
+      const ocupado = reservadosSet.has(key);
       const btn = document.createElement('button');
       btn.className = 'turno-btn' + (ocupado ? ' ocupado' : '') + (turnoSeleccionado === hora ? ' seleccionado' : '');
       btn.textContent = hora;
@@ -1121,9 +1280,10 @@
     renderSemana();
   }
 
-  function mostrarForm() {
+  async function mostrarForm() {
     document.getElementById('vista-home').style.display = 'none';
     document.getElementById('vista-form').style.display = 'block';
+    await cargarTurnosOcupados();
     renderSemana();
     window.scrollTo(0, 0);
   }
@@ -1137,6 +1297,8 @@
     document.getElementById('form-card').style.display = 'block';
     document.getElementById('confirmacion').style.display = 'none';
     ['nombre','apellido','dni','lote','celular','email'].forEach(id => document.getElementById(id).value = '');
+    setLoteSeleccionado('');
+    abrirLoteDropdown(false);
     diaSeleccionado = null; turnoSeleccionado = null; semanaOffset = 0;
     window.scrollTo(0, 0);
   }
@@ -1212,6 +1374,8 @@
       const data = await resp.json();
       if (!resp.ok || !data.ok) throw new Error(data.error || 'Error del servidor');
 
+      reservadosSet.add(`${diaSeleccionado}_${turnoSeleccionado}`);
+
       RESERVADOS.push(diaSeleccionado + '_' + turnoSeleccionado);
 
       document.getElementById('confirm-detalle-turno').innerHTML =
@@ -1233,6 +1397,7 @@
   }
 
   // ══ INIT ══
+  inicializarDropdownLote();
   poblarLotes();
   configurarDniInput();
   renderSemana();
