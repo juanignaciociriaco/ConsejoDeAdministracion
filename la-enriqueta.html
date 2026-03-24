@@ -21,21 +21,37 @@
 
   body {
     font-family: 'DM Sans', sans-serif;
-    background: var(--crema);
+    background: #1a2e1a;
     color: var(--texto);
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  /* ── FONDO DECORATIVO ── */
+  /* ── FONDO FOTO ── */
   body::before {
     content: '';
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(45,74,45,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 80% at 90% 80%, rgba(138,184,138,0.1) 0%, transparent 60%),
-      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a7c4a' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background-image: url('/bg.jpg');
+    background-size: cover;
+    background-position: center 24%;
+    filter: blur(3.5px) brightness(0.55) saturate(1.08);
+    transform: scale(1.03); /* evita bordes blancos del blur */
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* overlay sutil para mejorar legibilidad */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(
+      160deg,
+      rgba(20, 38, 20, 0.45) 0%,
+      rgba(10, 20, 10, 0.24) 60%,
+      rgba(30, 50, 20, 0.42) 100%
+    );
     pointer-events: none;
     z-index: 0;
   }
@@ -82,10 +98,11 @@
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(28px, 6vw, 42px);
     font-weight: 300;
-    color: var(--verde);
+    color: #ffffff;
     text-align: center;
     line-height: 1.15;
     letter-spacing: -0.5px;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.5);
   }
 
   .home-titulo em {
@@ -96,7 +113,7 @@
   .home-subtitulo {
     font-size: 13px;
     font-weight: 300;
-    color: var(--texto-suave);
+    color: rgba(255,255,255,0.75);
     text-align: center;
     margin-top: 8px;
     letter-spacing: 2px;
@@ -112,23 +129,27 @@
   /* ── CARDS ── */
   .cards {
     width: 100%;
-    max-width: 420px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    max-width: 920px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 
   .card {
-    background: rgba(255,255,255,0.7);
+    background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.84) 100%);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(45,74,45,0.12);
-    border-radius: 16px;
-    padding: 18px 22px;
+    border: 1px solid rgba(45,74,45,0.15);
+    border-radius: 20px;
+    padding: 19px 22px;
     display: flex;
     align-items: center;
     gap: 16px;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 24px rgba(29,48,29,0.09);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.25s ease,
+                background 0.25s ease;
     text-decoration: none;
     color: inherit;
     position: relative;
@@ -139,53 +160,76 @@
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 3px;
+    width: 4px;
     background: var(--verde-claro);
     transform: scaleY(0);
     transition: transform 0.25s ease;
     border-radius: 0 2px 2px 0;
   }
 
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.36) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+  }
+
   .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(45,74,45,0.15);
-    border-color: rgba(45,74,45,0.25);
-    background: rgba(255,255,255,0.9);
+    transform: translateY(-4px);
+    box-shadow: 0 14px 32px rgba(33,55,33,0.18);
+    border-color: rgba(45,74,45,0.3);
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.9) 100%);
+  }
+
+  .card:focus-visible {
+    outline: 3px solid rgba(45,74,45,0.25);
+    outline-offset: 2px;
   }
 
   .card:hover::before { transform: scaleY(1); }
 
   .card-icono {
-    width: 44px; height: 44px;
+    width: 48px; height: 48px;
     background: var(--verde);
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    font-size: 20px;
+    font-size: 22px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 14px rgba(22,34,22,0.2);
   }
 
   .card-info { flex: 1; }
 
   .card-titulo {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
+    line-height: 1.05;
     color: var(--verde);
   }
 
   .card-desc {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--texto-suave);
-    margin-top: 2px;
+    margin-top: 4px;
   }
 
   .card-arrow {
     color: var(--verde-claro);
-    font-size: 18px;
-    transition: transform 0.2s;
+    font-size: 22px;
+    font-weight: 600;
+    opacity: 0.9;
+    transition: transform 0.2s, opacity 0.2s;
   }
 
-  .card:hover .card-arrow { transform: translateX(4px); }
+  .card:hover .card-arrow {
+    transform: translateX(6px);
+    opacity: 1;
+  }
 
   /* ── CARD DESTACADA ── */
   .card.destacada {
@@ -205,43 +249,120 @@
     box-shadow: 0 8px 32px rgba(45,74,45,0.4);
   }
 
-  .badge {
-    background: var(--dorado);
+  .card.card-acceso {
+    background: linear-gradient(135deg, #275b86 0%, #3f7db0 60%, #5393c7 100%);
+    border-color: transparent;
     color: white;
-    font-size: 10px;
+  }
+
+  .card.card-acceso .card-titulo { color: white; }
+  .card.card-acceso .card-desc { color: rgba(255,255,255,0.82); }
+  .card.card-acceso .card-arrow { color: rgba(255,255,255,0.75); }
+  .card.card-acceso::before { background: #b9dcff; }
+  .card.card-acceso .card-icono {
+    background: rgba(255,255,255,0.2);
+    color: white;
+  }
+  .card.card-acceso:hover {
+    box-shadow: 0 14px 34px rgba(33,77,117,0.48);
+  }
+
+  .card.card-turno {
+    background: linear-gradient(135deg, #fffdf9 0%, #f7efe2 100%);
+    border-color: rgba(143,116,70,0.3);
+  }
+  .card.card-turno::before { background: #b78c4b; }
+  .card.card-turno .card-icono { background: #8f7446; }
+  .card.card-turno .card-arrow { color: #8f7446; }
+
+  .card.card-email {
+    background: linear-gradient(135deg, #f8fbff 0%, #edf4ff 100%);
+    border-color: rgba(74,111,165,0.28);
+  }
+  .card.card-email::before { background: #4a6fa5; }
+  .card.card-email .card-icono { background: #4a6fa5; }
+  .card.card-email .card-arrow { color: #4a6fa5; }
+
+  .card.card-admin {
+    background: linear-gradient(135deg, #f8fbfc 0%, #eef4f7 100%);
+    border-color: rgba(96,122,139,0.26);
+  }
+  .card.card-admin::before { background: #607a8b; }
+  .card.card-admin .card-icono { background: #607a8b; }
+  .card.card-admin .card-arrow { color: #607a8b; }
+
+  .card.card-guardia {
+    background: linear-gradient(135deg, #f5fff9 0%, #e9fbf1 100%);
+    border-color: rgba(37,211,102,0.35);
+  }
+  .card.card-guardia::before { background: #25d366; }
+  .card.card-guardia .card-icono { background: #1ea952; }
+  .card.card-guardia .card-arrow { color: #1ea952; }
+
+  .card.card-ubicacion {
+    background: linear-gradient(135deg, #fff9f5 0%, #fff0e8 100%);
+    border-color: rgba(226,112,58,0.3);
+  }
+  .card.card-ubicacion::before { background: #e2703a; }
+  .card.card-ubicacion .card-icono { background: #e2703a; }
+  .card.card-ubicacion .card-arrow { color: #e2703a; }
+
+  .badge {
+    background: linear-gradient(135deg, #b78c4b 0%, #cfac58 100%);
+    color: white;
+    font-size: 11px;
     font-weight: 500;
     letter-spacing: 1px;
     text-transform: uppercase;
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 20px;
-    margin-top: 4px;
+    margin-top: 6px;
     display: inline-block;
+    box-shadow: 0 4px 12px rgba(148,115,53,0.28);
   }
 
   .footer-home {
     margin-top: 36px;
     font-size: 11px;
-    color: var(--texto-suave);
+    color: rgba(255,255,255,0.5);
     text-align: center;
     letter-spacing: 0.5px;
-    opacity: 0.7;
   }
 
   /* Animaciones entrada */
   .home-wrap > * {
     opacity: 0;
-    animation: aparecer 0.6s ease forwards;
+    animation: aparecer 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
-  .escudo { animation-delay: 0.1s; }
-  .home-titulo { animation-delay: 0.2s; }
-  .home-subtitulo { animation-delay: 0.25s; }
-  .divisor { animation-delay: 0.3s; }
-  .cards { animation-delay: 0.4s; }
-  .footer-home { animation-delay: 0.5s; }
+  .escudo { animation-delay: 0.12s; }
+  .home-titulo { animation-delay: 0.3s; }
+  .home-subtitulo { animation-delay: 0.42s; }
+  .divisor { animation-delay: 0.56s; }
+  .cards { animation-delay: 0.72s; }
+  .footer-home { animation-delay: 1.32s; }
+
+  .cards .card {
+    opacity: 0;
+    transform: translateY(20px) scale(0.985);
+    animation: cardEntrar 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: 0.95s;
+  }
+
+  .cards .card:nth-child(1) { animation-delay: 0.95s; }
+  .cards .card:nth-child(2) { animation-delay: 1.08s; }
+  .cards .card:nth-child(3) { animation-delay: 1.21s; }
+  .cards .card:nth-child(4) { animation-delay: 1.34s; }
+  .cards .card:nth-child(5) { animation-delay: 1.47s; }
+  .cards .card:nth-child(6) { animation-delay: 1.60s; }
 
   @keyframes aparecer {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes cardEntrar {
+    from { opacity: 0; transform: translateY(20px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   /* ══ FORMULARIO ══ */
@@ -612,6 +733,7 @@
 
   /* ── RESPONSIVE ── */
   @media (max-width: 480px) {
+    .cards { grid-template-columns: 1fr; }
     .form-grid { grid-template-columns: 1fr; }
     .turnos-grid { grid-template-columns: repeat(2, 1fr); }
     .form-card { padding: 24px 18px; }
@@ -635,8 +757,8 @@
 
     <div class="cards">
 
-      <a class="card destacada" href="https://acceso.consorciolaenriqueta.com" target="_blank" rel="noopener noreferrer">
-        <div class="card-icono" style="background:rgba(255,255,255,0.15);font-size:24px;color:#fff;">✓</div>
+      <a class="card destacada card-acceso" href="https://acceso.consorciolaenriqueta.com" target="_blank" rel="noopener noreferrer">
+        <div class="card-icono" style="font-size:24px;">✓</div>
         <div class="card-info">
           <div class="card-titulo">Sistema de Acceso al Barrio</div>
           <div class="card-desc">Ingresá al portal de accesos</div>
@@ -644,30 +766,48 @@
         <div class="card-arrow">→</div>
       </a>
 
-      <div class="card" onclick="mostrarForm()">
+      <a class="card card-guardia" href="https://wa.me/5491130039443" target="_blank" rel="noopener noreferrer">
+        <div class="card-icono">🛎️</div>
+        <div class="card-info">
+          <div class="card-titulo">Dar aviso a la Guardia</div>
+          <div class="card-desc">WhatsApp +54 9 11 3003-9443</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <a class="card card-ubicacion" href="https://maps.app.goo.gl/Pr46YPcsVo5t76HcA" target="_blank" rel="noopener noreferrer">
+        <div class="card-icono">📍</div>
+        <div class="card-info">
+          <div class="card-titulo">Cómo llegar</div>
+          <div class="card-desc">Compartir ubicación en Google Maps</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <a class="card card-admin" href="mailto:administracion@consorciolaenriqueta.com">
+        <div class="card-icono">📧</div>
+        <div class="card-info">
+          <div class="card-titulo">Email a Administración</div>
+          <div class="card-desc">administracion@consorciolaenriqueta.com</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+
+      <div class="card card-turno" onclick="mostrarForm()">
         <div class="card-icono">📅</div>
         <div class="card-info">
-          <div class="card-titulo">Reservar turno</div>
-          <div class="card-desc">Reunión virtual con el consejo · 20 min</div>
+          <div class="card-titulo">Consejo de Administración</div>
+          <div class="card-desc">Turno online</div>
           <span class="badge">Mié &amp; Jue · 19:00–21:00</span>
         </div>
         <div class="card-arrow">→</div>
       </div>
 
-      <a class="card" href="mailto:consejo@consorciolaenriqueta.com">
-        <div class="card-icono" style="background:#4a6fa5;">✉️</div>
+      <a class="card card-email" href="mailto:consejo@consorciolaenriqueta.com">
+        <div class="card-icono">✉️</div>
         <div class="card-info">
-          <div class="card-titulo">Email</div>
-          <div class="card-desc">consejo@consorciolaenriqueta.com</div>
-        </div>
-        <div class="card-arrow">→</div>
-      </a>
-
-      <a class="card" href="mailto:administracion@consorciolaenriqueta.com">
-        <div class="card-icono" style="background:#6a7f8f;">📧</div>
-        <div class="card-info">
-          <div class="card-titulo">Email a Administración</div>
-          <div class="card-desc">administracion@consorciolaenriqueta.com</div>
+          <div class="card-titulo">Consejo de Administración</div>
+          <div class="card-desc">Enviar e-mail</div>
         </div>
         <div class="card-arrow">→</div>
       </a>
@@ -812,14 +952,25 @@
     return d.toISOString().split('T')[0];
   }
 
-  function poblarLotes() {
+  async function poblarLotes() {
     const loteSelect = document.getElementById('lote');
-    loteSelect.innerHTML = '<option value="">Seleccioná tu lote</option>';
-    for (let i = 0; i <= 350; i++) {
-      const option = document.createElement('option');
-      option.value = String(i);
-      option.textContent = String(i);
-      loteSelect.appendChild(option);
+    loteSelect.innerHTML = '<option value="">Cargando lotes…</option>';
+    try {
+      const res = await fetch('/api/lotes');
+      const data = await res.json();
+      loteSelect.innerHTML = '<option value="">Seleccioná tu lote</option>';
+      if (data.ok && data.lotes.length > 0) {
+        data.lotes.forEach(lote => {
+          const option = document.createElement('option');
+          option.value = lote;
+          option.textContent = lote;
+          loteSelect.appendChild(option);
+        });
+      } else {
+        loteSelect.innerHTML = '<option value="">No se pudieron cargar los lotes</option>';
+      }
+    } catch (err) {
+      loteSelect.innerHTML = '<option value="">Error al cargar lotes</option>';
     }
   }
 

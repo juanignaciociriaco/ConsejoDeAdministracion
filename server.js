@@ -19,9 +19,14 @@ app.get('/', (_, res) => {
 
 // ── PADRÓN DESDE CSV (LOTE + MÚLTIPLES DNI) ──
 const PADRON_CSV_PATH = process.env.PADRON_CSV_PATH || path.join(__dirname, 'padron_propietarios.csv');
+const PADRON_SHEETS_CSV_URL = String(process.env.PADRON_SHEETS_CSV_URL || '').trim();
+const PADRON_REFRESH_MS = Number(process.env.PADRON_REFRESH_MS || 3600000);
+const PADRON_FETCH_TIMEOUT_MS = Number(process.env.PADRON_FETCH_TIMEOUT_MS || 8000);
 const RESERVA_CC_EMAIL = process.env.RESERVA_CC_EMAIL || 'consejo@consorciolaenriqueta.com';
 let padronPorLote = new Map();
 let padronMtimeMs = 0;
+let padronLastRefreshMs = 0;
+let padronSource = 'none';
 
 function normalizeLote(value) {
   return String(value ?? '').trim();
@@ -35,23 +40,24 @@ function parseCsvLine(line) {
   return line.split(',').map((v) => v.trim().replace(/^"|"$/g, ''));
 }
 
-function cargarPadronCsv() {
-  const raw = fs.readFileSync(PADRON_CSV_PATH, 'utf8');
+function parsearPadronCsv(raw, sourceLabel) {
   const lineas = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
   if (lineas.length === 0) {
     throw new Error('El archivo CSV de padrón está vacío.');
   }
 
-  const header = parseCsvLine(lineas[0]).map((h) => h.toLowerCase());
-  const idxLote = header.indexOf('lote');
+  const header = parseCsvLine(lineas[0]).map((h) => h.toLowerCase().trim());
+  const idxLote = header.indexOf('lote') !== -1
+    ? header.indexOf('lote')
+    : header.indexOf('numero_lote');
   const dniColumnIndexes = header
     .map((name, index) => ({ name, index }))
     .filter(({ name }) => /^dni\d*$/.test(name))
     .map(({ index }) => index);
 
   if (idxLote === -1 || dniColumnIndexes.length === 0) {
-    throw new Error('El CSV debe tener encabezado "lote" y al menos una columna DNI (por ejemplo "dni", "dni1", "dni2").');
+    throw new Error('El CSV debe tener encabezado "lote" o "numero_lote" y al menos una columna DNI (por ejemplo "dni", "dni1", "dni2").');
   }
 
   const nuevoPadron = new Map();
@@ -80,14 +86,67 @@ function cargarPadronCsv() {
     }
   }
 
-  padronPorLote = nuevoPadron;
-  console.log(`✅ Padrón CSV cargado: ${padronPorLote.size} lotes desde ${PADRON_CSV_PATH}`);
+  return nuevoPadron;
 }
 
-function asegurarPadronActualizado() {
+function actualizarPadronEnMemoria(nuevoPadron, sourceLabel) {
+  padronPorLote = nuevoPadron;
+  padronLastRefreshMs = Date.now();
+  padronSource = sourceLabel;
+  console.log(`✅ Padrón cargado: ${padronPorLote.size} lotes desde ${sourceLabel}`);
+}
+
+function cargarPadronCsvLocal() {
+  const raw = fs.readFileSync(PADRON_CSV_PATH, 'utf8');
+  const nuevoPadron = parsearPadronCsv(raw, PADRON_CSV_PATH);
+  actualizarPadronEnMemoria(nuevoPadron, PADRON_CSV_PATH);
+}
+
+async function cargarPadronDesdeGoogleSheets() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PADRON_FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(PADRON_SHEETS_CSV_URL, {
+      method: 'GET',
+      headers: { Accept: 'text/csv,text/plain,*/*' },
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const raw = await response.text();
+    const nuevoPadron = parsearPadronCsv(raw, 'Google Sheets CSV');
+    actualizarPadronEnMemoria(nuevoPadron, 'Google Sheets CSV');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function asegurarPadronActualizado({ forzar = false } = {}) {
+  if (PADRON_SHEETS_CSV_URL) {
+    const necesitaRefresh = forzar || !padronLastRefreshMs || (Date.now() - padronLastRefreshMs) >= PADRON_REFRESH_MS;
+    if (necesitaRefresh) {
+      try {
+        await cargarPadronDesdeGoogleSheets();
+        return;
+      } catch (err) {
+        console.error(`⚠️ No se pudo actualizar padrón desde Google Sheets: ${err.message}`);
+        if (padronPorLote.size > 0) {
+          console.log(`ℹ️ Usando padrón en memoria (${padronPorLote.size} lotes) como fallback.`);
+          return;
+        }
+      }
+    } else {
+      return;
+    }
+  }
+
   const stat = fs.statSync(PADRON_CSV_PATH);
-  if (stat.mtimeMs !== padronMtimeMs) {
-    cargarPadronCsv();
+  if (stat.mtimeMs !== padronMtimeMs || padronPorLote.size === 0) {
+    cargarPadronCsvLocal();
     padronMtimeMs = stat.mtimeMs;
   }
 }
@@ -99,11 +158,24 @@ function validarLoteDniContraPadron(lote, dni) {
   return Boolean(dnisDelLote && dnisDelLote.has(dniNormalizado));
 }
 
-try {
-  asegurarPadronActualizado();
-} catch (err) {
-  console.error(`❌ No se pudo cargar el padrón CSV: ${err.message}`);
-}
+(async () => {
+  try {
+    await asegurarPadronActualizado({ forzar: true });
+  } catch (err) {
+    console.error(`❌ No se pudo cargar el padrón inicial: ${err.message}`);
+  }
+
+  if (PADRON_SHEETS_CSV_URL) {
+    setInterval(async () => {
+      try {
+        await cargarPadronDesdeGoogleSheets();
+      } catch (err) {
+        console.error(`⚠️ Refresh periódico fallido: ${err.message}`);
+      }
+    }, PADRON_REFRESH_MS);
+    console.log(`🔄 Refresh automático del padrón cada ${PADRON_REFRESH_MS / 60000} minutos.`);
+  }
+})();
 
 // ── TRANSPORTER SMTP CARBONIO ──
 const transporter = nodemailer.createTransport({
@@ -303,9 +375,9 @@ app.post('/api/reserva', async (req, res) => {
   }
 
   try {
-    asegurarPadronActualizado();
+    await asegurarPadronActualizado();
   } catch (err) {
-    console.error(`❌ Error al leer padrón CSV: ${err.message}`);
+    console.error(`❌ Error al actualizar padrón: ${err.message}`);
     return res.status(503).json({
       ok: false,
       error: 'No se pudo validar el padrón de propietarios. Intentá nuevamente más tarde.'
@@ -347,11 +419,28 @@ app.post('/api/reserva', async (req, res) => {
   }
 });
 
+// ── LOTES DEL PADRÓN ──
+app.get('/api/lotes', async (_, res) => {
+  try {
+    await asegurarPadronActualizado();
+  } catch (err) {
+    return res.status(503).json({ ok: false, error: 'Padrón no disponible.' });
+  }
+  const lotes = Array.from(padronPorLote.keys()).sort((a, b) => {
+    const na = Number(a); const nb = Number(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  });
+  res.json({ ok: true, lotes });
+});
+
 // ── HEALTH CHECK ──
 app.get('/api/health', (_, res) => res.json({
   ok: true,
   service: 'La Enriqueta API',
-  padronLotes: padronPorLote.size
+  padronLotes: padronPorLote.size,
+  padronSource,
+  padronLastRefreshMs
 }));
 
 // ── START ──

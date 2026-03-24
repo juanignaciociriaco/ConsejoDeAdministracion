@@ -83,6 +83,33 @@ Opcional: cambiar ruta del CSV por variable de entorno:
 PADRON_CSV_PATH=/ruta/al/padron.csv
 ```
 
+### Usar Google Sheets como origen de verdad
+
+Si tu padrón vive en Google Sheets, podés usarlo como fuente principal sin tocar archivos locales.
+
+1. En la hoja de Google, abrí `Archivo` → `Compartir` → `Publicar en la web`.
+2. Elegí la pestaña del padrón y formato `CSV`.
+3. Copiá la URL publicada (formato típico):
+
+```txt
+https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/export?format=csv&gid=GID
+```
+
+4. En el `.env`, configurá:
+
+```bash
+PADRON_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/export?format=csv&gid=GID
+PADRON_REFRESH_MS=300000
+PADRON_FETCH_TIMEOUT_MS=8000
+```
+
+Notas:
+- `PADRON_SHEETS_CSV_URL`: si está definida, se usa Google Sheets como fuente principal.
+- `PADRON_REFRESH_MS`: cada cuánto refresca en memoria (default: 5 minutos).
+- `PADRON_FETCH_TIMEOUT_MS`: timeout de descarga del CSV (default: 8 segundos).
+- Si Google Sheets falla temporalmente, el backend mantiene el último padrón cargado en memoria.
+- Si no hay padrón en memoria, intenta fallback a `PADRON_CSV_PATH`.
+
 ---
 
 ## 3. Correr en producción con PM2
