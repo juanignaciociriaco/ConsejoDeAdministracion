@@ -733,7 +733,34 @@
 
   /* ── RESPONSIVE ── */
   @media (max-width: 480px) {
+    body::before {
+      background-position: center 18%;
+      transform: scale(1.0);
+      filter: blur(2.8px) brightness(0.58) saturate(1.06);
+    }
+
+    .home-wrap { padding: 28px 14px; }
+    .cards { gap: 10px; }
     .cards { grid-template-columns: 1fr; }
+
+    .card {
+      border-radius: 16px;
+      padding: 13px 14px;
+      gap: 11px;
+    }
+
+    .card-icono {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      font-size: 18px;
+    }
+
+    .card-titulo { font-size: 17px; }
+    .card-desc { font-size: 12px; margin-top: 2px; }
+    .card-arrow { font-size: 18px; }
+    .badge { font-size: 10px; padding: 2px 8px; margin-top: 5px; }
+
     .form-grid { grid-template-columns: 1fr; }
     .turnos-grid { grid-template-columns: repeat(2, 1fr); }
     .form-card { padding: 24px 18px; }
@@ -814,7 +841,7 @@
 
     </div>
 
-    <p class="footer-home">© 2025 · Consorcio Club de Campo La Enriqueta</p>
+    <p class="footer-home">© 2026 · Consorcio Club de Campo La Enriqueta</p>
   </div>
 </div>
 
