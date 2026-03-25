@@ -273,8 +273,10 @@ async function cargarPadronDesdeGoogleSheetsAPI() {
   }
 }
 
-async function cargarPadronDesdeGoogleSheets() {
-  if (SA_FILE_OK) return cargarPadronDesdeGoogleSheetsAPI();
+async function cargarPadronDesdeGoogleSheetsCsvPublico() {
+  if (!PADRON_SHEETS_CSV_URL) {
+    throw new Error('PADRON_SHEETS_CSV_URL no configurado');
+  }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PADRON_FETCH_TIMEOUT_MS);
@@ -296,6 +298,36 @@ async function cargarPadronDesdeGoogleSheets() {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function cargarPadronDesdeGoogleSheets() {
+  const errores = [];
+
+  if (SA_FILE_OK) {
+    try {
+      await cargarPadronDesdeGoogleSheetsAPI();
+      return;
+    } catch (err) {
+      errores.push(`API privada: ${err.message}`);
+      console.error(`⚠️ Fallo API privada de Google Sheets: ${err.message}`);
+    }
+  }
+
+  if (PADRON_SHEETS_CSV_URL) {
+    try {
+      await cargarPadronDesdeGoogleSheetsCsvPublico();
+      return;
+    } catch (err) {
+      errores.push(`CSV público: ${err.message}`);
+      console.error(`⚠️ Fallo CSV público de Google Sheets: ${err.message}`);
+    }
+  }
+
+  if (errores.length === 0) {
+    throw new Error('No hay mecanismos remotos de padrón configurados');
+  }
+
+  throw new Error(errores.join(' | '));
 }
 
 async function asegurarPadronActualizado({ forzar = false } = {}) {
@@ -650,6 +682,53 @@ app.post('/api/restringido/login', async (req, res) => {
   } catch (err) {
     console.error('❌ Error login restringido:', err.message);
     return res.status(500).json({ ok: false, error: 'No se pudo validar el acceso.' });
+  }
+});
+
+app.post('/api/restringido/recargar-padron', async (req, res) => {
+  const usuario = String(req.body?.usuario || '').trim();
+  const clave = String(req.body?.clave || '').trim();
+
+  if (!usuario || !clave) {
+    return res.status(400).json({ ok: false, error: 'Usuario y clave requeridos.' });
+  }
+
+  try {
+    const row = await dbGet(
+      'SELECT id FROM restricted_users WHERE usuario = ? AND clave = ? LIMIT 1',
+      [usuario, clave]
+    );
+
+    if (!row) {
+      return res.status(401).json({ ok: false, error: 'Credenciales inválidas.' });
+    }
+
+    try {
+      await cargarPadronDesdeGoogleSheets();
+      return res.json({ ok: true, source: padronSource, lotes: padronPorLote.size });
+    } catch (remoteErr) {
+      console.error(`⚠️ Recarga manual remota fallida: ${remoteErr.message}`);
+      try {
+        cargarPadronCsvLocal();
+        const stat = fs.statSync(PADRON_CSV_PATH);
+        padronMtimeMs = stat.mtimeMs;
+        return res.json({
+          ok: true,
+          source: padronSource,
+          lotes: padronPorLote.size,
+          fallback: true,
+          remoteError: remoteErr.message,
+        });
+      } catch (localErr) {
+        return res.status(503).json({
+          ok: false,
+          error: `No se pudo recargar padrón. Remoto: ${remoteErr.message}. Local: ${localErr.message}`,
+        });
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error recarga restringida de padrón:', err.message);
+    return res.status(500).json({ ok: false, error: 'No se pudo recargar el padrón.' });
   }
 });
 

@@ -1096,6 +1096,18 @@
         </div>
         <div class="card-arrow">→</div>
       </a>
+
+      <div class="card card-email" role="button" tabindex="0" style="margin-top:12px;"
+           onclick="recargarPadronRestringido()"
+           onkeypress="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); recargarPadronRestringido(); }">
+        <div class="card-icono">📊</div>
+        <div class="card-info">
+          <div class="card-titulo">Recargar padrón</div>
+          <div class="card-desc">Actualizar por API, CSV Google o CSV local</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </div>
+      <div class="restric-sub" id="restric-padron-status" style="margin-top:10px;"></div>
     </div>
   </div>
 </div>
@@ -1424,6 +1436,7 @@
 
   // ⚙️ Apuntá esto a tu VPS/hosting donde corre server.js
   const API_URL = '/api/reserva';
+  let restricAuth = { usuario: '', clave: '' };
 
   function resetVistaRestringida() {
     document.getElementById('restric-login-card').style.display = 'block';
@@ -1431,6 +1444,8 @@
     document.getElementById('restric-usuario').value = '';
     document.getElementById('restric-clave').value = '';
     document.getElementById('restric-error').textContent = '';
+    document.getElementById('restric-padron-status').textContent = '';
+    restricAuth = { usuario: '', clave: '' };
   }
 
   function mostrarAccesoRestringido() {
@@ -1471,11 +1486,39 @@
       const data = await resp.json();
       if (!resp.ok || !data.ok) throw new Error(data.error || 'Credenciales inválidas.');
 
+      restricAuth = { usuario, clave };
       document.getElementById('restric-login-card').style.display = 'none';
       document.getElementById('restric-menu-card').style.display = 'block';
       errorEl.textContent = '';
     } catch (err) {
       errorEl.textContent = err.message || 'No se pudo validar el acceso.';
+    }
+  }
+
+  async function recargarPadronRestringido() {
+    const statusEl = document.getElementById('restric-padron-status');
+
+    if (!restricAuth.usuario || !restricAuth.clave) {
+      statusEl.textContent = 'Iniciá sesión nuevamente para recargar el padrón.';
+      return;
+    }
+
+    statusEl.textContent = 'Recargando padrón...';
+
+    try {
+      const resp = await fetch('/api/restringido/recargar-padron', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(restricAuth)
+      });
+      const data = await resp.json();
+
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'No se pudo recargar padrón.');
+
+      const fallbackTxt = data.fallback ? ' (fallback local)' : '';
+      statusEl.textContent = `Padrón recargado desde ${data.source}. Lotes: ${data.lotes}${fallbackTxt}.`;
+    } catch (err) {
+      statusEl.textContent = err.message || 'Error al recargar padrón.';
     }
   }
 
