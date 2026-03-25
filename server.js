@@ -193,27 +193,55 @@ function base64UrlEncode(buf) {
 async function obtenerAccessTokenSA() {
   const crypto = require('crypto');
   const saJson = JSON.parse(fs.readFileSync(GOOGLE_SERVICE_ACCOUNT_FILE, 'utf8'));
+  const privateKeyRaw = String(saJson.private_key || '');
+  const privateKey = privateKeyRaw.includes('\\n') ? privateKeyRaw.replace(/\\n/g, '\n') : privateKeyRaw;
   const now = Math.floor(Date.now() / 1000);
-  const header = base64UrlEncode(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const header = base64UrlEncode(JSON.stringify({
+    alg: 'RS256',
+    typ: 'JWT',
+    ...(saJson.private_key_id ? { kid: saJson.private_key_id } : {}),
+  }));
+  // Tolerancia a desfase de reloj entre host y Google para evitar invalid_grant.
+  const iat = now - 60;
   const payload = base64UrlEncode(JSON.stringify({
     iss: saJson.client_email,
     scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
     aud: 'https://oauth2.googleapis.com/token',
-    exp: now + 3600,
-    iat: now,
+    exp: iat + 3600,
+    iat,
   }));
-  const sign = crypto.createSign('SHA256');
-  sign.update(`${header}.${payload}`);
-  const sig = base64UrlEncode(sign.sign(saJson.private_key));
-  const jwt = `${header}.${payload}.${sig}`;
+  const unsignedToken = `${header}.${payload}`;
+  const sig = crypto.sign('RSA-SHA256', Buffer.from(unsignedToken), privateKey);
+  const jwt = `${unsignedToken}.${base64UrlEncode(sig)}`;
+
+  const tokenBody = new URLSearchParams({
+    grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    assertion: jwt,
+  }).toString();
 
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+    body: tokenBody,
   });
-  if (!tokenRes.ok) throw new Error(`Token request HTTP ${tokenRes.status}`);
-  const tokenJson = await tokenRes.json();
+
+  const tokenRaw = await tokenRes.text();
+  let tokenJson = null;
+  try {
+    tokenJson = JSON.parse(tokenRaw);
+  } catch (_) {
+    tokenJson = null;
+  }
+
+  if (!tokenRes.ok) {
+    const detail = tokenJson?.error_description || tokenJson?.error || tokenRaw || 'sin detalle';
+    throw new Error(`Token request HTTP ${tokenRes.status}: ${detail}`);
+  }
+
+  if (!tokenJson?.access_token) {
+    throw new Error('Token response sin access_token');
+  }
+
   return tokenJson.access_token;
 }
 
