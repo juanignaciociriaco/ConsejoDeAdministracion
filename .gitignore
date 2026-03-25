@@ -1,2 +1,9 @@
 node_modules/
-secrets/
+
+# Archivos locales de entorno
+.env
+.env.local
+
+# Secretos: ignorar todo el directorio salvo su .gitignore
+secrets/*
+!secrets/.gitignore
