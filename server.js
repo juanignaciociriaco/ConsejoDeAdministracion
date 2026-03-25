@@ -23,6 +23,12 @@ const PADRON_CSV_PATH = process.env.PADRON_CSV_PATH || path.join(__dirname, 'pad
 const PADRON_SHEETS_CSV_URL = String(process.env.PADRON_SHEETS_CSV_URL || '').trim();
 const PADRON_REFRESH_MS = Number(process.env.PADRON_REFRESH_MS || 3600000);
 const PADRON_FETCH_TIMEOUT_MS = Number(process.env.PADRON_FETCH_TIMEOUT_MS || 8000);
+const GOOGLE_SERVICE_ACCOUNT_FILE = String(process.env.GOOGLE_SERVICE_ACCOUNT_FILE || '').trim();
+const GOOGLE_SHEETS_ID = String(process.env.GOOGLE_SHEETS_ID || '').trim();
+const GOOGLE_SHEETS_GID = String(process.env.GOOGLE_SHEETS_GID || '0').trim();
+// SA activa cuando el archivo de clave existe en disco
+const SA_FILE_OK = Boolean(GOOGLE_SERVICE_ACCOUNT_FILE && GOOGLE_SHEETS_ID && fs.existsSync(GOOGLE_SERVICE_ACCOUNT_FILE));
+const REMOTE_PADRON_AVAILABLE = SA_FILE_OK || Boolean(PADRON_SHEETS_CSV_URL);
 const RESERVA_CC_EMAIL = process.env.RESERVA_CC_EMAIL || 'consejo@consorciolaenriqueta.com';
 const RESERVAS_DB_PATH = process.env.RESERVAS_DB_PATH || path.join(__dirname, 'data', 'reservas.sqlite');
 let padronPorLote = new Map();
@@ -55,6 +61,15 @@ function dbAll(sql, params = []) {
   });
 }
 
+function dbGet(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    reservasDb.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row || null);
+    });
+  });
+}
+
 async function initReservasDb() {
   await dbRun(`
     CREATE TABLE IF NOT EXISTS reservas (
@@ -72,6 +87,22 @@ async function initReservasDb() {
       UNIQUE(fecha, hora)
     )
   `);
+
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS restricted_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario TEXT NOT NULL UNIQUE,
+      clave TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Usuario inicial para el área restringida.
+  await dbRun(
+    'INSERT OR IGNORE INTO restricted_users (usuario, clave) VALUES (?, ?)',
+    ['consejo', '1234']
+  );
+
   console.log(`✅ SQLite listo en ${RESERVAS_DB_PATH}`);
 }
 
@@ -153,7 +184,70 @@ function cargarPadronCsvLocal() {
   actualizarPadronEnMemoria(nuevoPadron, PADRON_CSV_PATH);
 }
 
+// ── Google SA JWT: implementación manual con crypto built-in, sin deps externos ──
+function base64UrlEncode(buf) {
+  return Buffer.from(buf).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function obtenerAccessTokenSA() {
+  const crypto = require('crypto');
+  const saJson = JSON.parse(fs.readFileSync(GOOGLE_SERVICE_ACCOUNT_FILE, 'utf8'));
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64UrlEncode(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const payload = base64UrlEncode(JSON.stringify({
+    iss: saJson.client_email,
+    scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600,
+    iat: now,
+  }));
+  const sign = crypto.createSign('SHA256');
+  sign.update(`${header}.${payload}`);
+  const sig = base64UrlEncode(sign.sign(saJson.private_key));
+  const jwt = `${header}.${payload}.${sig}`;
+
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+  });
+  if (!tokenRes.ok) throw new Error(`Token request HTTP ${tokenRes.status}`);
+  const tokenJson = await tokenRes.json();
+  return tokenJson.access_token;
+}
+
+async function cargarPadronDesdeGoogleSheetsAPI() {
+  const accessToken = await obtenerAccessTokenSA();
+
+  // Sheets API v4: funciona con SA aunque la hoja no sea pública
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEETS_ID}/values/A1:Z2000?majorDimension=ROWS`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PADRON_FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const json = await response.json();
+    const rows = json.values || [];
+
+    // Convertir array de filas a CSV para reusar parsearPadronCsv
+    const raw = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const nuevoPadron = parsearPadronCsv(raw, 'Google Sheets API v4 (Service Account)');
+    actualizarPadronEnMemoria(nuevoPadron, 'Google Sheets API v4 (Service Account)');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function cargarPadronDesdeGoogleSheets() {
+  if (SA_FILE_OK) return cargarPadronDesdeGoogleSheetsAPI();
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PADRON_FETCH_TIMEOUT_MS);
 
@@ -177,7 +271,7 @@ async function cargarPadronDesdeGoogleSheets() {
 }
 
 async function asegurarPadronActualizado({ forzar = false } = {}) {
-  if (PADRON_SHEETS_CSV_URL) {
+  if (REMOTE_PADRON_AVAILABLE) {
     const necesitaRefresh = forzar || !padronLastRefreshMs || (Date.now() - padronLastRefreshMs) >= PADRON_REFRESH_MS;
     if (necesitaRefresh) {
       try {
@@ -222,7 +316,7 @@ function validarLoteDniContraPadron(lote, dni) {
     console.error(`❌ No se pudo cargar el padrón inicial: ${err.message}`);
   }
 
-  if (PADRON_SHEETS_CSV_URL) {
+  if (REMOTE_PADRON_AVAILABLE) {
     setInterval(async () => {
       try {
         await cargarPadronDesdeGoogleSheets();
@@ -502,6 +596,32 @@ app.post('/api/reserva', async (req, res) => {
     }
     console.error('❌ Error al enviar mail:', err.message);
     res.status(500).json({ ok: false, error: 'No se pudo enviar el mail. Revisá la config SMTP.' });
+  }
+});
+
+// ── LOGIN ÁREA RESTRINGIDA ──
+app.post('/api/restringido/login', async (req, res) => {
+  const usuario = String(req.body?.usuario || '').trim();
+  const clave = String(req.body?.clave || '').trim();
+
+  if (!usuario || !clave) {
+    return res.status(400).json({ ok: false, error: 'Usuario y clave requeridos.' });
+  }
+
+  try {
+    const row = await dbGet(
+      'SELECT id FROM restricted_users WHERE usuario = ? AND clave = ? LIMIT 1',
+      [usuario, clave]
+    );
+
+    if (!row) {
+      return res.status(401).json({ ok: false, error: 'Credenciales inválidas.' });
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ Error login restringido:', err.message);
+    return res.status(500).json({ ok: false, error: 'No se pudo validar el acceso.' });
   }
 });
 

@@ -57,8 +57,106 @@
   }
 
   /* ── VISTAS ── */
-  #vista-home, #vista-form { position: relative; z-index: 1; }
+  #vista-home, #vista-form, #vista-restringido { position: relative; z-index: 1; }
   #vista-form { display: none; }
+  #vista-restringido { display: none; }
+
+  .acceso-restringido-btn {
+    position: fixed;
+    top: 12px;
+    right: 16px;
+    z-index: 5;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(120,120,120,0.2);
+    color: rgba(255,255,255,0.55);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 6px 10px;
+    cursor: pointer;
+    opacity: 0.55;
+    backdrop-filter: blur(6px);
+    transition: opacity 0.2s ease, background 0.2s ease;
+  }
+
+  .acceso-restringido-btn:hover {
+    opacity: 0.9;
+    background: rgba(120,120,120,0.35);
+  }
+
+  .restric-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 18px;
+  }
+
+  .restric-card {
+    width: 100%;
+    max-width: 520px;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(45,74,45,0.16);
+    border-radius: 18px;
+    padding: 26px 22px;
+    box-shadow: 0 8px 30px rgba(20,35,20,0.2);
+  }
+
+  .restric-titulo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    color: var(--verde);
+    margin-bottom: 8px;
+  }
+
+  .restric-sub {
+    font-size: 13px;
+    color: var(--texto-suave);
+    margin-bottom: 18px;
+  }
+
+  .restric-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .restric-grid input {
+    background: var(--crema);
+    border: 1.5px solid var(--crema-oscuro);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--texto);
+    outline: none;
+  }
+
+  .restric-grid input:focus {
+    border-color: var(--verde-medio);
+    box-shadow: 0 0 0 3px rgba(74,124,74,0.1);
+    background: white;
+  }
+
+  .restric-btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: white;
+    background: linear-gradient(135deg, var(--verde), var(--verde-medio));
+  }
+
+  .restric-error {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #b3392f;
+    min-height: 16px;
+  }
 
   /* ══ HOME ══ */
   .home-wrap {
@@ -883,6 +981,8 @@
 </head>
 <body>
 
+<button class="acceso-restringido-btn" id="btn-acceso-restringido" onclick="mostrarAccesoRestringido()">Acceso restringido</button>
+
 <!-- ══ HOME ══ -->
 <div id="vista-home">
   <div class="home-wrap">
@@ -965,6 +1065,38 @@
     </div>
 
     <p class="footer-home">© 2026 · Consorcio Club de Campo La Enriqueta</p>
+  </div>
+</div>
+
+<!-- ══ ÁREA RESTRINGIDA ══ -->
+<div id="vista-restringido">
+  <div class="restric-wrap">
+    <div class="restric-card" id="restric-login-card">
+      <button class="btn-volver" onclick="volverHomeDesdeRestringido()">← Volver</button>
+      <h2 class="restric-titulo" style="margin-top:14px;">Acceso Restringido</h2>
+      <p class="restric-sub">Ingresá credenciales del Consejo para continuar.</p>
+      <div class="restric-grid">
+        <input type="text" id="restric-usuario" placeholder="Usuario">
+        <input type="password" id="restric-clave" placeholder="Clave">
+        <button class="restric-btn" onclick="loginRestringido()">Ingresar</button>
+      </div>
+      <div class="restric-error" id="restric-error"></div>
+    </div>
+
+    <div class="restric-card" id="restric-menu-card" style="display:none;">
+      <button class="btn-volver" onclick="volverHomeDesdeRestringido()">← Volver</button>
+      <h2 class="restric-titulo" style="margin-top:14px;">Consejo de Administración</h2>
+      <p class="restric-sub">Menú interno</p>
+
+      <a class="card card-email" href="https://m.consorciolaenriqueta.com" target="_blank" rel="noopener noreferrer" style="margin-top:8px;">
+        <div class="card-icono">✉️</div>
+        <div class="card-info">
+          <div class="card-titulo">Webmail del Consorcio</div>
+          <div class="card-desc">Abrir m.consorciolaenriqueta.com</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+    </div>
   </div>
 </div>
 
@@ -1282,6 +1414,8 @@
 
   async function mostrarForm() {
     document.getElementById('vista-home').style.display = 'none';
+    document.getElementById('vista-restringido').style.display = 'none';
+    document.getElementById('btn-acceso-restringido').style.display = 'none';
     document.getElementById('vista-form').style.display = 'block';
     await cargarTurnosOcupados();
     renderSemana();
@@ -1291,9 +1425,65 @@
   // ⚙️ Apuntá esto a tu VPS/hosting donde corre server.js
   const API_URL = '/api/reserva';
 
+  function resetVistaRestringida() {
+    document.getElementById('restric-login-card').style.display = 'block';
+    document.getElementById('restric-menu-card').style.display = 'none';
+    document.getElementById('restric-usuario').value = '';
+    document.getElementById('restric-clave').value = '';
+    document.getElementById('restric-error').textContent = '';
+  }
+
+  function mostrarAccesoRestringido() {
+    document.getElementById('vista-home').style.display = 'none';
+    document.getElementById('vista-form').style.display = 'none';
+    document.getElementById('vista-restringido').style.display = 'block';
+    document.getElementById('btn-acceso-restringido').style.display = 'none';
+    resetVistaRestringida();
+    window.scrollTo(0, 0);
+  }
+
+  function volverHomeDesdeRestringido() {
+    document.getElementById('vista-restringido').style.display = 'none';
+    document.getElementById('vista-home').style.display = 'block';
+    document.getElementById('btn-acceso-restringido').style.display = 'block';
+    resetVistaRestringida();
+    window.scrollTo(0, 0);
+  }
+
+  async function loginRestringido() {
+    const usuario = document.getElementById('restric-usuario').value.trim();
+    const clave = document.getElementById('restric-clave').value.trim();
+    const errorEl = document.getElementById('restric-error');
+
+    if (!usuario || !clave) {
+      errorEl.textContent = 'Ingresá usuario y clave.';
+      return;
+    }
+
+    errorEl.textContent = 'Validando...';
+
+    try {
+      const resp = await fetch('/api/restringido/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, clave })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Credenciales inválidas.');
+
+      document.getElementById('restric-login-card').style.display = 'none';
+      document.getElementById('restric-menu-card').style.display = 'block';
+      errorEl.textContent = '';
+    } catch (err) {
+      errorEl.textContent = err.message || 'No se pudo validar el acceso.';
+    }
+  }
+
   function volverHome() {
     document.getElementById('vista-form').style.display = 'none';
+    document.getElementById('vista-restringido').style.display = 'none';
     document.getElementById('vista-home').style.display = 'block';
+    document.getElementById('btn-acceso-restringido').style.display = 'block';
     document.getElementById('form-card').style.display = 'block';
     document.getElementById('confirmacion').style.display = 'none';
     ['nombre','apellido','dni','lote','celular','email'].forEach(id => document.getElementById(id).value = '');

@@ -8,10 +8,16 @@ services:
       - .env
     environment:
       - PORT=4000
+      # URL pública como fallback (se usa solo si no hay Service Account)
       - PADRON_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/e/2PACX-1vRAIAs5-AbPGVI1Tro-Bm6Jpw4D38DjZYNyeOyhxXTJ_nbZjhdE3GVRsv5dZVZ9NAIj9lbVSaxJJOYU/pub?gid=495925484&single=true&output=csv
       - PADRON_REFRESH_MS=3600000
       - PADRON_FETCH_TIMEOUT_MS=8000
       - RESERVAS_DB_PATH=/app/data/reservas.sqlite
+      # Google Sheets API privada via Service Account
+      - GOOGLE_SERVICE_ACCOUNT_FILE=/app/secrets/consorciolaenriqueta-f704e5879a66.json
+      - GOOGLE_SHEETS_ID=16DATjZlawWOIWKUF7ZhrEW_gUHU_dgJdQPKjKMeklak
+      - GOOGLE_SHEETS_GID=495925484
     volumes:
       - ./data:/app/data
+      - ./secrets:/app/secrets:ro
     restart: unless-stopped
